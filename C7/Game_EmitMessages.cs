@@ -272,6 +272,19 @@ public partial class Game {
 		));
 	}
 
+	public void EmitGoodyHutSignal(MsgGoodyHut msg) {
+		EmitSignal(SignalName.InteractivePopUp, new ParameterWrapper<InteractablePopUp>(
+			new InformationPopup(
+				controller.id,
+				"Domestic Advisor",
+				msg.text,
+				Advisor.Domestic,
+				msg.outcome == GoodyHuts.Outcome.Nothing ? Mood.Sad : Mood.Happy,
+				350
+			)
+		));
+	}
+
 	public void EmitBarbarianCampDispersedSignal(MsgBarbarianCampDispersed msg) {
 		string message = msg.goldEarned > 0
 			? $"We cleared a barbarian encampment and earned {msg.goldEarned} gold!"

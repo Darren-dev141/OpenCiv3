@@ -264,6 +264,20 @@ namespace C7Engine {
 		}
 	}
 
+	public class MsgGoodyHut : MessageToUI {
+		public ID controllerId;
+		public GoodyHuts.Outcome outcome;
+		public string text;
+		public Tile location;
+
+		public MsgGoodyHut(ID controllerId, GoodyHuts.Outcome outcome, string text, Tile location) {
+			this.controllerId = controllerId;
+			this.outcome = outcome;
+			this.text = text;
+			this.location = location;
+		}
+	}
+
 	public class MsgShowTemporaryPopup : MessageToUI {
 		public ID controllerId;
 		public string message;

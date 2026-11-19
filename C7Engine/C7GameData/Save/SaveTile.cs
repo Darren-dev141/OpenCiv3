@@ -35,6 +35,10 @@ namespace C7GameData.Save {
 				}
 			}
 
+			if (tile.hasGoodyHut) {
+				features.Add("goodyHut");
+			}
+
 			if (tile.hasHadForestCleared) {
 				features.Add("hasHadForestCleared");
 			}
@@ -66,6 +70,7 @@ namespace C7GameData.Save {
 				isBonusShield = features.Contains("bonusShield"),
 				isSnowCapped = features.Contains("snowCapped"),
 				isPineForest = features.Contains("pineForest"),
+				hasGoodyHut = features.Contains("goodyHut"),
 			};
 
 			tile.Resource = tile.ResourceKey == Resource.NONE.Key ? Resource.NONE : resources.Find(r => r.Key == tile.ResourceKey);

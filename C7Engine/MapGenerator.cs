@@ -143,7 +143,8 @@ namespace C7Engine {
 			// Previously step 10
 			AddBarbarianCamps(mgd, gameMap);
 
-			// TODO: Goody huts, barbarian camps.
+			// Step 12: Add goody huts, after the camps so they can keep clear of them.
+			AddGoodyHuts(mgd, gameMap);
 
 			// Last step: Assign the terrain file and image ids to each tile so
 			// we know which texture to use when displaying them.
@@ -1360,6 +1361,35 @@ namespace C7Engine {
 			}
 
 			return result;
+		}
+
+		// Placement adapted from GBiebs/OpenCiv3 feature/civ3-complete
+		// (AddGoodyHuts): about one hut per 55 land tiles, never on a resource,
+		// city site start, camp, or volcano, and at least 4 tiles from another
+		// hut or a camp.
+		private const int LandTilesPerGoodyHut = 55;
+		private const int GoodyHutSpacing = 4;
+
+		private static void AddGoodyHuts(MapGeneratorData mgd, GameMap m) {
+			Random rand = new(mgd.mapSeed + 0x600d);
+			List<int> tileIndicies = Enumerable.Range(0, m.tiles.Count).ToList();
+			rand.Shuffle<int>(CollectionsMarshal.AsSpan(tileIndicies));
+
+			int wanted = m.tiles.Count(t => t.IsLand()) / LandTilesPerGoodyHut;
+			List<Tile> huts = [];
+			for (int i = 0; i < tileIndicies.Count && huts.Count < wanted; ++i) {
+				Tile t = m.tiles[tileIndicies[i]];
+				if (!t.IsLand() || t == Tile.NONE || t.overlayTerrainType.Key == "volcano"
+					|| (t.Resource != null && t.Resource != Resource.NONE) || t.HasBarbarianCamp()
+					|| t.HasCity() || t.overlayTerrainType.impassable
+					|| m.startingLocations.Contains(t)
+					|| huts.Any(h => h.DistanceTo(t) < GoodyHutSpacing)
+					|| m.barbarianCamps.Any(c => c.DistanceTo(t) < GoodyHutSpacing)) {
+					continue;
+				}
+				t.hasGoodyHut = true;
+				huts.Add(t);
+			}
 		}
 
 		private static void AddBarbarianCamps(MapGeneratorData mgd, GameMap m) {

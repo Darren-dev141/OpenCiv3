@@ -50,6 +50,11 @@ public partial class MapUnit {
 			}
 		});
 
+		// Collect a goody hut; barbarians leave them alone.
+		if (tile.hasGoodyHut && !owner.isBarbarians) {
+			EngineStorage.ReadGameData((gameData) => GoodyHuts.Enter(gameData, this, tile));
+		}
+
 		// Destroy the enemy city on the tile unless we're the barbarians,
 		// in which case we'll just take some gold.
 		if (tile.HasCity() && !owner.IsAtPeaceWith(tile.cityAtTile.owner)) {

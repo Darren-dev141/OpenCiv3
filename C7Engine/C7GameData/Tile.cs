@@ -28,6 +28,9 @@ namespace C7GameData {
 		// For water tiles, is this tile part of an inland sea with fresh water?
 		public bool isFreshWater = false;
 
+		// A minor tribe's village (goody hut, issue #934); a unit entering the tile collects it.
+		public bool hasGoodyHut = false;
+
 		// An arbitrary number indicating which part of the continent this tile
 		// is part of, for the purposes of biome assignment.
 		public int biomeRegion = -1;

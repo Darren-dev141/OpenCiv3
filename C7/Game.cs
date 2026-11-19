@@ -385,6 +385,10 @@ public partial class Game : Node {
 				if (mBCD.controllerId == controller.id)
 					this.EmitBarbarianCampDispersedSignal(mBCD);
 				break;
+			case MsgGoodyHut mGH:
+				if (mGH.controllerId == controller.id)
+					this.EmitGoodyHutSignal(mGH);
+				break;
 			case MsgPlayerDefeated mPD:
 				this.EmitDefeatSignal(mPD.playerId);
 				InterestingEvent();
