@@ -13,6 +13,12 @@ namespace C7GameData {
 	// they drop out and the possible ones share the chance, as in the source.
 	// Odds come from the rules (Rules.GoodyHutOdds); see GoodyHutOddsRow for
 	// their provenance.
+	//
+	// KNOWN LIMITATION: with only Gold implemented, every hut pays gold:
+	// nothing=0 in every Standard row, so "nothing" is never rolled, and the
+	// barbarian chances (10-90%) drop out. Expansionist rows are an inference
+	// (next easier level, no barbarians), and several rows sum to 75, not
+	// 100. The table is UNVERIFIED against the CivFanatics article.
 	public static class GoodyHuts {
 		private static ILogger log = Log.ForContext(typeof(GoodyHuts));
 

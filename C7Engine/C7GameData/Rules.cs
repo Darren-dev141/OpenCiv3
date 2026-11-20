@@ -53,6 +53,11 @@ namespace C7GameData {
 	// Table adapted from GBiebs/OpenCiv3 feature/civ3-complete (Rules.cs,
 	// GoodyHutOddsRow), itself from CivFanatics' "Probabilities of goody huts
 	// (C3C)". UNVERIFIED against the article.
+	//
+	// KNOWN LIMITATION: with only Gold implemented every hut pays gold:
+	// nothing=0 in every Standard row, so "nothing" is never rolled, and the
+	// barbarian chances drop out. Expansionist rows are an inference (next
+	// easier level, no barbarians), and several rows sum to 75, not 100.
 	public static class GoodyHutOddsRow {
 		private static readonly string[] Difficulties = ["Chieftain", "Warlord", "Regent", "Monarch", "Emperor", "Demigod", "Deity", "Creator"];
 

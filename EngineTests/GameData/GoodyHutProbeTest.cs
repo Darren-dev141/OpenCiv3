@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using C7Engine;
 using C7Engine.Lua;
 using C7GameData;
@@ -17,9 +15,7 @@ namespace EngineTests.GameData;
 // (b) a collect framework: a player unit entering a hut tile removes the hut;
 // (c) two effects, GOLD and NOTHING, plus the sourced odds table.
 //
-// The feature does not exist yet, so the API under test is bound by name via
-// reflection. That keeps this project compiling (and the existing tests
-// running) while each test fails with "missing feature" until it is built.
+// The API under test is called directly, so a rename fails at compile time.
 // The shape follows GBiebs/OpenCiv3 feature/civ3-complete 75df1502
 // (C7GameData.GoodyHuts, Tile.hasGoodyHut, Rules.GoodyHut*).
 //
@@ -38,36 +34,12 @@ public class GoodyHutProbeTest : IClassFixture<SaveGameFixture> {
 		EngineStorage.messagesToUI.Clear();
 	}
 
-	// ---- reflection binding to the not-yet-written API ----
+	private static bool HasHut(Tile tile) => tile.hasGoodyHut;
 
-	private static Exception Missing(string what) =>
-		new Xunit.Sdk.XunitException($"Goody hut feature missing: {what}");
+	private static void SetHut(Tile tile, bool value) => tile.hasGoodyHut = value;
 
-	private static bool HasHut(Tile tile) {
-		FieldInfo f = typeof(Tile).GetField("hasGoodyHut", BindingFlags.Public | BindingFlags.Instance);
-		if (f == null) throw Missing("Tile.hasGoodyHut");
-		return (bool)f.GetValue(tile);
-	}
-
-	private static void SetHut(Tile tile, bool value) {
-		FieldInfo f = typeof(Tile).GetField("hasGoodyHut", BindingFlags.Public | BindingFlags.Instance);
-		if (f == null) throw Missing("Tile.hasGoodyHut");
-		f.SetValue(tile, value);
-	}
-
-	private static Type GoodyHutsType() =>
-		typeof(Tile).Assembly.GetType("C7GameData.GoodyHuts") ?? throw Missing("class C7GameData.GoodyHuts");
-
-	private static object OutcomeValue(string name) {
-		Type outcome = GoodyHutsType().GetNestedType("Outcome") ?? throw Missing("GoodyHuts.Outcome enum");
-		return Enum.Parse(outcome, name);
-	}
-
-	private static string Apply(string outcome, C7GameData.GameData game, MapUnit unit, Tile tile) {
-		MethodInfo m = GoodyHutsType().GetMethod("Apply", BindingFlags.Public | BindingFlags.Static)
-			?? throw Missing("GoodyHuts.Apply(outcome, gameData, unit, tile, tribe)");
-		return (string)m.Invoke(null, [OutcomeValue(outcome), game, unit, tile, "test"]);
-	}
+	private static string Apply(GoodyHuts.Outcome outcome, C7GameData.GameData game, MapUnit unit, Tile tile) =>
+		GoodyHuts.Apply(outcome, game, unit, tile, "test");
 
 	private static List<Tile> Huts(C7GameData.GameData game) => game.map.tiles.Where(HasHut).ToList();
 
@@ -161,14 +133,22 @@ public class GoodyHutProbeTest : IClassFixture<SaveGameFixture> {
 	public void UnitEnteringAHutTileRemovesTheHut() {
 		(MapUnit warrior, Tile spot) = WarriorAndSpot();
 		SetHut(spot, true);
+		C7GameData.GameData.rng = new Random(1);
+		warrior.owner.isHuman = true;
+		int goldBefore = warrior.owner.gold;
+		EngineStorage.messagesToUI.Clear();
 
 		warrior.OnEnterTile(spot);
 
 		Assert.False(HasHut(spot));
+		// An outcome was applied: gold changed (only Gold is implemented) and a message was emitted.
+		Assert.True(warrior.owner.gold > goldBefore);
+		Assert.Contains(EngineStorage.messagesToUI, m => m is MsgGoodyHut);
 	}
 
 	[Fact]
 	public void BarbariansDoNotCollectHuts() {
+		C7GameData.GameData.rng = new Random(1);
 		Player barbarians = gameData.players.First(p => p.isBarbarians);
 		Tile spot = gameData.map.tiles.First(t => Tile.IsTileValid(t) && t.IsLand() && !t.HasCity()
 			&& t.unitsOnTile.Count == 0 && !t.overlayTerrainType.impassable);
@@ -184,10 +164,11 @@ public class GoodyHutProbeTest : IClassFixture<SaveGameFixture> {
 
 	[Fact]
 	public void GoldEffectPaysWithinTheRuleRange() {
+		C7GameData.GameData.rng = new Random(1);
 		(MapUnit warrior, Tile spot) = WarriorAndSpot();
 		int before = warrior.owner.gold;
 
-		Apply("Gold", gameData, warrior, spot);
+		Apply(GoodyHuts.Outcome.Gold, gameData, warrior, spot);
 
 		// GBiebs Rules.GoodyHutGold = [25, 50] (approximation per its comment).
 		int gained = warrior.owner.gold - before;
@@ -196,26 +177,26 @@ public class GoodyHutProbeTest : IClassFixture<SaveGameFixture> {
 
 	[Fact]
 	public void NothingEffectChangesNoGold() {
+		C7GameData.GameData.rng = new Random(1);
 		(MapUnit warrior, Tile spot) = WarriorAndSpot();
 		int before = warrior.owner.gold;
 
-		string text = Apply("Nothing", gameData, warrior, spot);
+		string text = Apply(GoodyHuts.Outcome.Nothing, gameData, warrior, spot);
 
 		Assert.Equal(before, warrior.owner.gold);
 		Assert.False(string.IsNullOrEmpty(text));
 	}
 
-	// Standard odds, easiest row (percent): city, tech, gold, settler, map,
-	// mercenaries, nothing, barbarians.
+	// Regression guard: checks the shipped Standard table against typos in
+	// GBiebs's transcription (the expected numbers below were copied from it).
+	// It does NOT check the CivFanatics source; the table is unverified against
+	// the article. Columns: city, tech, gold, settler, map, mercenaries,
+	// nothing, barbarians (percent), easiest row first.
 	[Fact]
-	public void OddsTableMatchesTheSourcedStandardRows() {
-		object rows = gameData.rules.GetType().GetProperty("GoodyHutOdds")?.GetValue(gameData.rules)
-			?? gameData.rules.GetType().GetField("GoodyHutOdds")?.GetValue(gameData.rules)
-			?? throw Missing("Rules.GoodyHutOdds");
-		List<object> list = ((IEnumerable)rows).Cast<object>().ToList();
+	public void OddsTableMatchesGBiebsTranscriptionRegressionGuard() {
+		List<GoodyHutOdds> list = gameData.rules.GoodyHutOdds;
 		Assert.Equal(8, list.Count);
 
-		string[] columns = ["city", "tech", "gold", "settler", "map", "mercenaries", "nothing", "barbarians"];
 		double[][] expected = [
 			[5, 35, 15, 15, 10, 10, 0, 10], [10, 25, 10, 10, 10, 10, 0, 25],
 			[5, 20, 10, 10, 10, 10, 0, 35], [5, 15, 10, 10, 10, 10, 0, 40],
@@ -223,11 +204,141 @@ public class GoodyHutProbeTest : IClassFixture<SaveGameFixture> {
 			[0, 0, 5, 0, 5, 5, 0, 85], [0, 0, 0, 0, 0, 0, 0, 90],
 		];
 		for (int r = 0; r < 8; r++) {
-			for (int c = 0; c < columns.Length; c++) {
-				Type t = list[r].GetType();
-				object v = t.GetField(columns[c])?.GetValue(list[r]) ?? t.GetProperty(columns[c])?.GetValue(list[r]);
-				Assert.Equal(expected[r][c], Convert.ToDouble(v));
+			GoodyHutOdds o = list[r];
+			Assert.Equal(expected[r], new[] { o.city, o.tech, o.gold, o.settler, o.map, o.mercenaries, o.nothing, o.barbarians });
+		}
+	}
+
+	// ---- OutcomeChances, Enter, Odds row selection ----
+
+	private static GoodyHutOdds Row(string name, double gold, double nothing, double city = 0) =>
+		new() { difficulty = name, gold = gold, nothing = nothing, city = city };
+
+	// A warrior and a resource-free spot, for a non-Expansionist civ on a one-row Standard table.
+	private (MapUnit warrior, Tile spot) WarriorWithTable(GoodyHutOdds row) {
+		C7GameData.GameData.rng = new Random(1);
+		gameData.rules.GoodyHutOdds = [row];
+		(MapUnit warrior, Tile spot) = WarriorAndSpot();
+		warrior.owner.civilization.traits.Remove(Civilization.Trait.Expansionist);
+		gameData.gameDifficulty = new Difficulty { id = gameData.difficulties[0].id, Name = row.difficulty };
+		spot.Resource = Resource.NONE;
+		return (warrior, spot);
+	}
+
+	[Fact]
+	public void OutcomeChancesExcludeZeroChanceAndUnimplementedOutcomes() {
+		// city is unimplemented (dropped despite its chance); nothing=0 is dropped; gold is all that is left.
+		(MapUnit warrior, Tile spot) = WarriorWithTable(Row("Row0", gold: 15, nothing: 0, city: 5));
+
+		Dictionary<GoodyHuts.Outcome, double> chances = GoodyHuts.OutcomeChances(gameData, warrior, spot);
+
+		Assert.Equal([GoodyHuts.Outcome.Gold], chances.Keys.ToList());
+		Assert.Equal(1.0, chances[GoodyHuts.Outcome.Gold], 9);
+	}
+
+	[Fact]
+	public void OutcomeChancesShareTheTotalAmongPossibleOutcomes() {
+		(MapUnit warrior, Tile spot) = WarriorWithTable(Row("Row0", gold: 15, nothing: 5, city: 80));
+
+		Dictionary<GoodyHuts.Outcome, double> chances = GoodyHuts.OutcomeChances(gameData, warrior, spot);
+
+		Assert.Equal(2, chances.Count);
+		Assert.Equal(0.75, chances[GoodyHuts.Outcome.Gold], 9);
+		Assert.Equal(0.25, chances[GoodyHuts.Outcome.Nothing], 9);
+		Assert.Equal(1.0, chances.Values.Sum(), 9);
+	}
+
+	[Fact]
+	public void OutcomeChancesDropGoldOnAResourceTile() {
+		(MapUnit warrior, Tile spot) = WarriorWithTable(Row("Row0", gold: 15, nothing: 5));
+		spot.Resource = gameData.map.tiles.Select(t => t.Resource).First(r => r != null && r != Resource.NONE);
+
+		Dictionary<GoodyHuts.Outcome, double> chances = GoodyHuts.OutcomeChances(gameData, warrior, spot);
+
+		Assert.Equal([GoodyHuts.Outcome.Nothing], chances.Keys.ToList());
+	}
+
+	[Fact]
+	public void OutcomeChancesWithNothingPossibleIsADesertedVillage() {
+		(MapUnit warrior, Tile spot) = WarriorWithTable(Row("Row0", gold: 0, nothing: 0, city: 10));
+
+		Dictionary<GoodyHuts.Outcome, double> chances = GoodyHuts.OutcomeChances(gameData, warrior, spot);
+
+		Assert.Equal([GoodyHuts.Outcome.Nothing], chances.Keys.ToList());
+		Assert.Equal(1.0, chances[GoodyHuts.Outcome.Nothing], 9);
+	}
+
+	[Fact]
+	public void EnterWithAFixedSeedGivesTheSameOutcomeTwice() {
+		// Gold and nothing both possible, so the roll matters.
+		(MapUnit warrior, Tile spot) = WarriorWithTable(Row("Row0", gold: 50, nothing: 50));
+
+		List<GoodyHuts.Outcome> first = [];
+		List<GoodyHuts.Outcome> second = [];
+		foreach (List<GoodyHuts.Outcome> run in new[] { first, second }) {
+			C7GameData.GameData.rng = new Random(12345);
+			for (int i = 0; i < 20; i++) {
+				run.Add(GoodyHuts.Enter(gameData, warrior, spot));
 			}
 		}
+
+		Assert.Equal(first, second);
+		// Non-vacuous: both outcomes occur across the 20 rolls.
+		Assert.Contains(GoodyHuts.Outcome.Gold, first);
+		Assert.Contains(GoodyHuts.Outcome.Nothing, first);
+	}
+
+	[Fact]
+	public void EnterRemovesTheHutEvenWhenNothingIsPossible() {
+		(MapUnit warrior, Tile spot) = WarriorWithTable(Row("Row0", gold: 0, nothing: 0));
+		SetHut(spot, true);
+
+		GoodyHuts.Outcome outcome = GoodyHuts.Enter(gameData, warrior, spot);
+
+		Assert.Equal(GoodyHuts.Outcome.Nothing, outcome);
+		Assert.False(HasHut(spot));
+	}
+
+	[Fact]
+	public void ExpansionistCivGetsTheExpansionistTableAndOthersGetStandard() {
+		C7GameData.GameData.rng = new Random(1);
+		GoodyHutOdds standard = Row("Row0", gold: 1, nothing: 0);
+		GoodyHutOdds expansionist = Row("Row0", gold: 2, nothing: 0);
+		gameData.rules.GoodyHutOdds = [standard];
+		gameData.rules.ExpansionistGoodyHutOdds = [expansionist];
+		gameData.gameDifficulty = new Difficulty { id = gameData.difficulties[0].id, Name = "Row0" };
+		Player player = gameData.players.First(p => !p.isBarbarians);
+
+		player.civilization.traits.Remove(Civilization.Trait.Expansionist);
+		Assert.Same(standard, GoodyHuts.Odds(gameData, player));
+
+		player.civilization.traits.Add(Civilization.Trait.Expansionist);
+		Assert.Same(expansionist, GoodyHuts.Odds(gameData, player));
+	}
+
+	[Fact]
+	public void OddsUsesTheRowAtTheDifficultysPlaceWhenItsNameIsNotInTheTable() {
+		C7GameData.GameData.rng = new Random(1);
+		List<GoodyHutOdds> table = Enumerable.Range(0, gameData.difficulties.Count).Select(i => Row("T" + i, gold: i + 1, nothing: 0)).ToList();
+		gameData.rules.GoodyHutOdds = table;
+		Player player = gameData.players.First(p => !p.isBarbarians);
+		player.civilization.traits.Remove(Civilization.Trait.Expansionist);
+
+		gameData.gameDifficulty = new Difficulty { id = gameData.difficulties[2].id, Name = "NoSuchRow" };
+
+		Assert.Same(table[2], GoodyHuts.Odds(gameData, player));
+	}
+
+	[Fact]
+	public void OddsFallsBackToIndexThreeWhenTheDifficultyIsNotAmongTheDifficulties() {
+		C7GameData.GameData.rng = new Random(1);
+		List<GoodyHutOdds> table = Enumerable.Range(0, 8).Select(i => Row("T" + i, gold: i + 1, nothing: 0)).ToList();
+		gameData.rules.GoodyHutOdds = table;
+		Player player = gameData.players.First(p => !p.isBarbarians);
+		player.civilization.traits.Remove(Civilization.Trait.Expansionist);
+
+		gameData.gameDifficulty = new Difficulty { id = ID.None("not-a-difficulty"), Name = "NoSuchRow" };
+
+		Assert.Same(table[3], GoodyHuts.Odds(gameData, player));
 	}
 }
