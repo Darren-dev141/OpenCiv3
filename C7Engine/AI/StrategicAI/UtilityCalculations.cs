@@ -16,7 +16,8 @@ namespace C7Engine.AI.StrategicAI {
 
 		public static float CalculateAvailableLandScore(Player player) {
 			//Figure out if there's land to settle, and how much
-			var possibleLocations = SettlerLocationAI.GetScoredSettlerCandidates(player.cities[0].location, player);
+			City origin = player.cities.FirstOrDefault(c => c.IsCapital()) ?? player.cities[0];
+			var possibleLocations = SettlerLocationAI.GetScoredSettlerCandidates(origin.location, player);
 			var availableLand = possibleLocations.Count * PossibleCityLocationScore;
 			var settlementQuality = possibleLocations.Values.Sum(i => i / TileScoreDivider);
 			return settlementQuality + availableLand;

@@ -102,7 +102,8 @@ namespace C7Engine.Pathing {
 		}
 
 		public bool ConnectedToCapital(Player p, City c) {
-			return segments[p][c] == segments[p][p.cities[0]];
+			City capital = p.cities.FirstOrDefault(city => city.IsCapital());
+			return capital != null && segments[p][c] == segments[p][capital];
 		}
 	}
 }
