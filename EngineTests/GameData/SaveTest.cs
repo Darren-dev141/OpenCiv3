@@ -522,8 +522,7 @@ public class SaveTests : IClassFixture<SaveGameFixture> {
 			"4 Middle Ages.biq",
 			"5 Mesoamerica.biq",
 			"6 Age of Discovery.biq",
-			// skip for now because BIQ parsing fails
-			// "7 Sengoku - Sword of the Shogun.biq",
+			"7 Sengoku - Sword of the Shogun.biq",
 			"8 Napoleonic Europe.biq",
 			"9 WWII in the Pacific.biq",
 		};
@@ -534,8 +533,7 @@ public class SaveTests : IClassFixture<SaveGameFixture> {
 			"4 MP Middle Ages.biq",
 			"5 MP Mesoamerica.biq",
 			"6 MP Age of Discovery.biq",
-			// skip for now because BIQ parsing fails
-			// "7 MP Sengoku - Sword of the Shogun.biq",
+			"7 MP Sengoku - Sword of the Shogun.biq",
 			"8 MP Napoleonic Europe.biq",
 			"9 MP WWII in the Pacific.biq",
 		};
