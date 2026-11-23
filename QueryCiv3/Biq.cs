@@ -488,10 +488,24 @@ namespace QueryCiv3 {
 							}
 							break;
 						case "TILE":
-							dataLength = count * sizeof(TILE);
+							// TILE records are length-prefixed like the other dynamic
+							// sections: each record is an int32 Length followed by
+							// Length bytes. Length is sizeof(TILE)-4 in most files,
+							// but some scenario files (e.g. Sengoku) append extra
+							// trailing bytes per record that the struct doesn't model.
+							dataLength = 0;
 							Tile = new TILE[count];
+
 							fixed (void* ptr = Tile) {
-								Buffer.MemoryCopy(bytePtr + offset, ptr, dataLength, dataLength);
+								byte* tilePtr = (byte*)ptr;
+								byte* dataPtr = bytePtr + offset;
+
+								for (int i = 0; i < count; i++) {
+									Buffer.MemoryCopy(dataPtr, tilePtr, sizeof(TILE), sizeof(TILE));
+									tilePtr += sizeof(TILE);
+									dataPtr += Tile[i].Length + 4;
+									dataLength += Tile[i].Length + 4;
+								}
 							}
 							break;
 						case "UNIT":
