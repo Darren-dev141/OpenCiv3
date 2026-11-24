@@ -22,8 +22,9 @@ public static class RawSav {
 	/// <summary>
 	/// Number of tiles with the goody-hut flag in a .BIQ file.
 	/// </summary>
-	public static int GoodyHutCountBiq(string biqPath) {
+	public static int? GoodyHutCountBiq(string biqPath) {
 		BiqData biq = BiqData.LoadFile(biqPath);
+		if (biq.Wmap == null || biq.Wmap.Length == 0) return null;
 		return biq.Tile.Count(t => t.GoodyHut);
 	}
 

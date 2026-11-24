@@ -20,7 +20,8 @@ public static class ImportHarness {
 	}
 
 	public static byte[] DefaultBiqBytes(FixtureStore store) {
-		return File.ReadAllBytes(DefaultBiqPath(store));
+		// Util.ReadFile decompresses BLAST-packed BIQ/SAV files.
+		return Util.ReadFile(DefaultBiqPath(store));
 	}
 
 	// Mirrors EngineTests SaveTest: scenario BIQs resolve PediaIcons/Civilopedia

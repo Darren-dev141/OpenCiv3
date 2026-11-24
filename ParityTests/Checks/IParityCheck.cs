@@ -76,3 +76,17 @@ public interface IParityCheck {
 	string Tolerance { get; }
 	CheckResult Run(FixtureStore store);
 }
+
+public static class ParityCheckExtensions {
+	/// <summary>A result pre-filled with the check's declared metadata.</summary>
+	public static CheckResult BaseResult(this IParityCheck check) {
+		return new CheckResult {
+			Id = check.Id,
+			MatrixRow = check.MatrixRow,
+			SpaIssue = check.SpaIssue,
+			Kind = check.Kind.ToString(),
+			Reference = check.Reference,
+			Tolerance = check.Tolerance,
+		};
+	}
+}

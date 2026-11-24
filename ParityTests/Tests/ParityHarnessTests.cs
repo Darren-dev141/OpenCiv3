@@ -55,16 +55,16 @@ public class ParityHarnessTests {
 
 		CheckResult result = new GoodyHutImportCheck().Run(store);
 
-		// The importer does not import goody huts today, so the check must
-		// report FAIL and carry raw-vs-imported counts for all 34 fixtures.
+		// Every fixture has a row. Only mapped, parseable fixtures can carry
+		// raw-vs-imported tile counts.
 		Assert.Equal("FAIL", result.Status);
 		Assert.Equal(34, result.Fixtures.Count);
-		Assert.All(result.Fixtures, f => {
+		Assert.All(result.Fixtures.Where(f => f.Status is "PASS" or "FAIL"), f => {
 			Assert.NotNull(f.RawValue);
 			Assert.NotNull(f.ImportedValue);
 		});
-		Assert.True(result.Fixtures.Sum(f => f.RawValue.Value) > 0);
-		Assert.True(result.Fixtures.Any(f => f.RawValue.Value != f.ImportedValue.Value));
+		Assert.Contains(result.Fixtures, f => f.Status == "FAIL" && f.RawValue > 0 && f.RawValue != f.ImportedValue);
+		Assert.All(result.Fixtures.Where(f => f.Status == "SKIP"), f => Assert.Contains("no map", f.Detail));
 	}
 
 	[SkippableFact]
@@ -86,5 +86,6 @@ public class ParityHarnessTests {
 		Skip.If(result.Status == "SKIP", result.Summary);
 
 		Assert.Equal("PASS", result.Status);
+		Assert.All(result.Fixtures, f => Assert.Equal("PASS", f.Status));
 	}
 }
