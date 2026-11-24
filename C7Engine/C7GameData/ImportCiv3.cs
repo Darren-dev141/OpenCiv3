@@ -288,6 +288,9 @@ namespace C7GameData {
 			SetMapDimensions(biq, save);
 			SetWorldWrap(biq, save);
 			SetWorldCharacteristics(biq, save);
+			var cultureSettings = biq.Game[0];
+			save.VictoryConditions.AllowCulturalVictory = cultureSettings.CulturalVictory;
+			ImportCultureVictoryThresholds(cultureSettings.OneCityCultureWin, cultureSettings.AllCitiesCultureWin);
 
 			// Import tiles
 			int i = 0;
@@ -469,6 +472,7 @@ namespace C7GameData {
 
 		private void ImportSavVictory() {
 			var game = savData.Game;
+			ImportCultureVictoryThresholds(game.OneCityCultureWin, game.AllCitiesCultureWin);
 
 			save.VictoryConditions = new VictoryConditions {
 				AllowDominationVictory = game.DominationVictory,
@@ -495,6 +499,18 @@ namespace C7GameData {
 				save.GameOver = true;
 			}
 
+		}
+
+		private void ImportCultureVictoryThresholds(int cityThreshold, int empireThreshold) {
+			if (cityThreshold > 0) {
+				save.Rules.CityCultureVictoryThreshold = cityThreshold;
+			}
+
+			// Stock GAME stores the Standard target even though Conquests scales it by map size.
+			// https://forums.civfanatics.com/threads/what-does-20k-mean.213039/
+			if (empireThreshold > 0 && empireThreshold != save.Rules.DefaultEmpireCultureVictoryThreshold) {
+				save.Rules.EmpireCultureVictoryThresholdOverride = empireThreshold;
+			}
 		}
 
 		private void ImportCiv3Resources() {

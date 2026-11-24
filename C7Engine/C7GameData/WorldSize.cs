@@ -10,6 +10,7 @@ namespace C7GameData {
 
 		public int distanceBetweenCivs;
 		public int numberOfCivs;
+		public int? empireCultureVictoryThreshold;
 
 		public bool isDefault;
 

@@ -1,10 +1,13 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using C7Engine;
 using C7Engine.Lua;
 using C7GameData;
 using EngineTests.Utils;
+using QueryCiv3;
 using Xunit;
 
 namespace EngineTests.GameData.Victory;
@@ -68,10 +71,43 @@ public class CulturalVictoryTest : IClassFixture<SaveGameFixture> {
 		}
 	}
 
-	private async Task<(Player human, Player rival)> StartGame(string size, bool enabled, int ownCities, int rivalCities) {
+	[Fact]
+	public async Task ScenarioWorldThresholdSurvivesSaveRoundTripAndAppliesWithoutRivals() {
+		var (human, rival) = await StartGame("Huge", true, 3, 0, empireThreshold: 40_000);
+		rival.defeated = true;
+		SeedNextTurnTotal(human, 40_000);
+		await AdvanceOneTurn();
+		Assert.All(human.cities, c => Assert.True(c.GetCulture() < 20_000));
+		Assert.Same(human, EngineStorage.gameData.winner);
+	}
+
+	[SkippableFact]
+	public void ImportMesoamericaPreservesCustomCultureThresholds() {
+		Skip.If(Civ3TestData.ShouldSkipCiv3DependentTests(), "No Civ3 install found.");
+		string root = Path.Combine(Civ3Location.GetCiv3Path(), "Conquests");
+		string scenario = Path.Combine(root, "Conquests", "5 Mesoamerica.biq");
+		string defaults = Path.Combine(root, "conquests.biq");
+		AssertFixtureHash(scenario, "8519E37A7DE6749E99F9EBF8D99D4BF47451A287C61EC07E15A844A53E27CDA6");
+		AssertFixtureHash(defaults, "1BD610AB1420217F7D64A9214B60C0BC7686E4781A0D6E66590171535495609C");
+
+		var save = ImportCiv3.ImportBiq(scenario, defaults,
+			mod => Path.GetFullPath(Path.Combine(root, "Conquests", mod.Replace('\\', Path.DirectorySeparatorChar), "Text", "PediaIcons.txt")),
+			_ => Path.Combine(root, "Text", "Civilopedia.txt"));
+		Assert.Equal(2_000, save.Rules.CityCultureVictoryThreshold);
+		Assert.Equal(7_000, save.Rules.EmpireCultureVictoryThresholdOverride);
+
+		static void AssertFixtureHash(string path, string expected) {
+			Skip.If(!File.Exists(path), $"Fixture not installed: {path}");
+			using var stream = File.OpenRead(path);
+			Skip.If(Convert.ToHexString(SHA256.HashData(stream)) != expected, $"Fixture hash differs: {path}");
+		}
+	}
+
+	private async Task<(Player human, Player rival)> StartGame(string size, bool enabled, int ownCities, int rivalCities, int? empireThreshold = null) {
 		var save = GameMode.Load(PathUtils.GameModesDir, new GameMode.Config("civ3")).GetSave();
 		save.Seed = fixture.saveGame.Seed;
 		var world = save.WorldSizes.Single(w => w.name == size);
+		world.empireCultureVictoryThreshold = empireThreshold;
 		new GameSetup {
 			playerCivilization = save.Civilizations.First(c => !c.isBarbarian),
 			difficulty = save.Difficulties.First(),
@@ -84,7 +120,7 @@ public class CulturalVictoryTest : IClassFixture<SaveGameFixture> {
 			victoryConditions = new VictoryConditions { AllowCulturalVictory = enabled },
 		}.Populate(save);
 
-		var human = await CreateGame.createGame(save, _ => fixture.behaviors);
+		var human = await CreateGame.createGame(empireThreshold.HasValue ? save.Clone() : save, _ => fixture.behaviors);
 		var game = EngineStorage.gameData;
 		var rival = game.players.Single(p => !p.isHuman && !p.isBarbarians);
 		Assert.Equal(world.width, game.map.numTilesWide);

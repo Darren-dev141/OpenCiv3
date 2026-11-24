@@ -185,7 +185,7 @@ namespace C7GameData.Save {
 		private void ConvertVictoryConditions(GameData data) {
 			VictoryConditions conditions = data.victoryConditions;
 
-			// TODO: add victory options to data.victories based on data.victoryConditions
+			// TODO: add remaining victory options to data.victories
 			// NOTE: Order matters
 
 			if (conditions.AllowDominationVictory) {
@@ -197,6 +197,18 @@ namespace C7GameData.Save {
 			if (conditions.AllowConquestVictory) { // TODO: implement conquest victory
 												   // TODO: ruleset, Conquest victory condition
 				data.victories.Add(new ConquestVictory(rivalsAliveLimit: 0));
+			}
+
+			if (conditions.AllowCulturalVictory) {
+				WorldSize size = data.worldCharacteristics?.worldSize;
+				if (string.IsNullOrEmpty(size?.name) && size?.empireCultureVictoryThreshold == null) {
+					size = data.worldSizes.Find(w => w.width == data.map.numTilesWide && w.height == data.map.numTilesTall);
+				}
+				int empireThreshold = size?.empireCultureVictoryThreshold
+					?? data.rules.EmpireCultureVictoryThresholdOverride
+					?? data.rules.EmpireCultureVictoryThresholds.GetValueOrDefault(
+						size?.name ?? "", data.rules.DefaultEmpireCultureVictoryThreshold);
+				data.victories.Add(new CulturalVictory(data.rules.CityCultureVictoryThreshold, empireThreshold));
 			}
 
 			// There is no "score victory", but we can treat score as if it were, so

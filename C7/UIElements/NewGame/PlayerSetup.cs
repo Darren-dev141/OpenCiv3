@@ -126,6 +126,11 @@ public partial class PlayerSetup : Control {
 		conquestVictory.SetPressed(victoryConditions.AllowConquestVictory);
 		conquestVictory.Toggled += (state) => { victoryConditions.AllowConquestVictory = state; };
 		rulesContainer.AddChild(conquestVictory);
+
+		var culturalVictory = new Civ3Checkbox() { Text = "Allow Cultural Victory" };
+		culturalVictory.SetPressed(victoryConditions.AllowCulturalVictory);
+		culturalVictory.Toggled += (state) => { victoryConditions.AllowCulturalVictory = state; };
+		rulesContainer.AddChild(culturalVictory);
 	}
 
 	private void BackToMainMenu() {
@@ -346,6 +351,7 @@ public partial class PlayerSetup : Control {
 	private void PersistVictoryConditions(VictoryConditions vcs) {
 		C7Settings.SetValue(C7Settings.Rules.SectionName, C7Settings.Rules.AllowDominationVictory, vcs.AllowDominationVictory.ToString());
 		C7Settings.SetValue(C7Settings.Rules.SectionName, C7Settings.Rules.AllowConquestVictory, vcs.AllowConquestVictory.ToString());
+		C7Settings.SetValue(C7Settings.Rules.SectionName, C7Settings.Rules.AllowCulturalVictory, vcs.AllowCulturalVictory.ToString());
 	}
 
 	private void StartGame() {

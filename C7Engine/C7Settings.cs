@@ -53,6 +53,7 @@ namespace C7Engine {
 			public const string SectionName = nameof(Rules);
 			public const string AllowDominationVictory = nameof(AllowDominationVictory);
 			public const string AllowConquestVictory = nameof(AllowConquestVictory);
+			public const string AllowCulturalVictory = nameof(AllowCulturalVictory);
 		}
 
 		public static void LoadSettings() {

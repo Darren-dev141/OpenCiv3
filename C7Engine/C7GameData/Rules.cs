@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace C7GameData {
 	public class Rules {
 		public int MaximumResearchTime;
@@ -26,5 +28,16 @@ namespace C7GameData {
 		public float ShieldRateForDisbanding; // per cent
 		public bool AllowLesserUnitProduction; // for example, allow building a Spearman/Pikeman when we can build a Musketman (simultaneously)
 		public int RadarTileVisibility; // how many tiles, a unit with the Radar ability, can see ahead
+
+		// Conquests cultural victory thresholds: http://forums.civfanatics.com/threads/170282
+		public int CityCultureVictoryThreshold = 20_000;
+		public int DefaultEmpireCultureVictoryThreshold = 100_000;
+		public int? EmpireCultureVictoryThresholdOverride;
+		public Dictionary<string, int> EmpireCultureVictoryThresholds = new() {
+			["Tiny"] = 60_000,
+			["Small"] = 80_000,
+			["Large"] = 130_000,
+			["Huge"] = 160_000,
+		};
 	}
 }

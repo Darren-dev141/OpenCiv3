@@ -20,10 +20,12 @@ public class VictoryConditions {
 	public static VictoryConditions FromSettings() {
 		string allowConquestRaw = C7Settings.GetSettingsValueOrDefault(C7Settings.Rules.SectionName, C7Settings.Rules.AllowConquestVictory, "");
 		string allowDominationRaw = C7Settings.GetSettingsValueOrDefault(C7Settings.Rules.SectionName, C7Settings.Rules.AllowDominationVictory, "");
+		string allowCulturalRaw = C7Settings.GetSettingsValueOrDefault(C7Settings.Rules.SectionName, C7Settings.Rules.AllowCulturalVictory, "");
 
 		VictoryConditions vc = new() {
 			AllowConquestVictory = bool.TryParse(allowConquestRaw, out bool allowConquest) && allowConquest,
-			AllowDominationVictory = bool.TryParse(allowDominationRaw, out bool allowDomination) && allowDomination
+			AllowDominationVictory = bool.TryParse(allowDominationRaw, out bool allowDomination) && allowDomination,
+			AllowCulturalVictory = bool.TryParse(allowCulturalRaw, out bool allowCultural) && allowCultural,
 		};
 
 		return vc;

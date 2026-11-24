@@ -9,4 +9,7 @@ public class VictoryStatus {
 	public float DominationArea { get; set; }
 	public float DominationPopulation { get; set; }
 	public float Score { get; set; }
+	public int HighestCityCulture { get; set; }
+	public long EmpireCulture { get; set; }
+	public long RivalEmpireCulture { get; set; }
 }
