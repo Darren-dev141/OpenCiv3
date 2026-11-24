@@ -18,7 +18,7 @@ public partial class UnitButtons : VBoxContainer {
 
 	// A record holding a button and the base tooltip (without any indication
 	// of how many turns an action might take).
-	public record ButtonAndTooltip(TextureButton button, string baseTooltip);
+	public record ButtonAndTooltip(BaseButton button, string baseTooltip);
 
 	private Dictionary<string, ButtonAndTooltip> buttonMap = new();
 
@@ -62,7 +62,8 @@ public partial class UnitButtons : VBoxContainer {
 		// AddNewButton(specializedControls, "autobombard");
 		// AddNewButton(specializedControls, "paradrop");
 		//superfortify?
-		// AddNewButton(specializedControls, "hurryBuilding");
+		AddNewButton(specializedControls, C7Action.UnitHurryProduction, useText: true);
+		AddNewButton(specializedControls, C7Action.UnitFormArmy, useText: true);
 		// AddNewButton(specializedControls, "upgrade");
 		// AddNewButton(specializedControls, "sacrifice");
 		// AddNewButton(specializedControls, "scienceAge");
@@ -88,10 +89,16 @@ public partial class UnitButtons : VBoxContainer {
 		}
 	}
 
-	private void AddNewButton(HBoxContainer row, string action) {
-		TextureButton button = new();
+	private void AddNewButton(HBoxContainer row, string action, bool useText = false) {
+		BaseButton button;
+		if (useText) {
+			button = new Button { Text = C7Action.ToTooltip(action) };
+		} else {
+			TextureButton icon = new();
+			TextureLoader.SetButtonTextures(icon, "ui.unit_control." + action);
+			button = icon;
+		}
 		button.Hide();
-		TextureLoader.SetButtonTextures(button, "ui.unit_control." + action);
 		button.Pressed += () => {
 			EmitSignal(SignalName.ActionRequested, action);
 			button.ReleaseFocus();

@@ -67,6 +67,8 @@ public static class C7Action {
 	public const string UnitSentryEnemyOnly = "unit_sentry_enemy_only";
 	public const string UnitWait = "unit_wait";
 	public const string UnitLoad = "unit_load";
+	public const string UnitHurryProduction = "unit_hurry_production";
+	public const string UnitFormArmy = "unit_form_army";
 	public const string UnitUnload = "unit_unload";
 
 	private static readonly Dictionary<string, UnitAction> toUnitAction = new() {
@@ -75,6 +77,8 @@ public static class C7Action {
 		[UnitHold] = UnitAction.Hold,
 		[UnitLoad] = UnitAction.Load,
 		[UnitUnload] = UnitAction.Unload,
+		[UnitHurryProduction] = UnitAction.HurryProduction,
+		[UnitFormArmy] = UnitAction.FormArmy,
 		[UnitWait] = UnitAction.Wait,
 		[UnitFortify] = UnitAction.Fortify,
 		[UnitDisband] = UnitAction.Disband,
@@ -109,6 +113,8 @@ public static class C7Action {
 		[UnitSentryEnemyOnly] = "Sentry Enemy Only",
 		[UnitWait] = "Wait",
 		[UnitLoad] = "Load",
+		[UnitHurryProduction] = "Hurry Production",
+		[UnitFormArmy] = "Form Army",
 		[UnitUnload] = "Unload"
 	};
 

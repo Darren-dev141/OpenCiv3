@@ -1295,6 +1295,17 @@ public partial class Game : Node {
 			new MsgUnloadTransport(CurrentlySelectedUnit.id).send();
 		}
 
+		if (currentAction == C7Action.UnitHurryProduction) {
+			ID leaderId = CurrentlySelectedUnit.id;
+			new ActionToEngineMsg(() => EngineStorage.gameData.GetUnit(leaderId)?.TryHurryProduction()).send();
+			return;
+		}
+		if (currentAction == C7Action.UnitFormArmy) {
+			ID leaderId = CurrentlySelectedUnit.id;
+			new ActionToEngineMsg(() => EngineStorage.gameData.GetUnit(leaderId)?.TryFormArmy()).send();
+			return;
+		}
+
 		Terraform terraform = C7Action.ToTerraform(currentAction);
 
 		// the `r` key is mapped to the 'Build Road' action

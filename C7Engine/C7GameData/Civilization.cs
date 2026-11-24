@@ -64,6 +64,7 @@ namespace C7GameData {
 		// Like `art\advisors\LZ_all.pcx` for the English.
 		public string leaderArtFile;
 
+		public List<string> militaryLeaderNames = new();
 		public List<string> cityNames = new List<string>();
 
 		// The IDs of all the techs that this civ starts with.

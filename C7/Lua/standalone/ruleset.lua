@@ -6,6 +6,8 @@ a value refers to a directory with unit art in C7/Assets/Art/Units
 local unit_replacement_art_map = {
   ["Settler"] = "Carthaginian Settler",
   ["Worker"] = "Carthaginian Worker",
+  ["Leader"] = "Carthaginian Settler",
+  ["Army"] = "Carthaginian Settler",
   ["Scout"] = "Euro Scout",
   ["Explorer"] = "German Explorer",
   ["Warrior"] = "Tribal Mediterranean Warrior",
@@ -51,6 +53,9 @@ return function(civ3_game_mode)
     -- Only preserve a unit if we have an art replacement for it
     if replacement_art then
       unit_prototype.art.mainArt.defaultName = replacement_art
+      if unit_prototype.name == "Leader" or unit_prototype.name == "Army" then
+        unit_prototype.art.mainArt.variations = nil
+      end
 
       -- TODO: these are just placeholders until we have some proper art
       unit_prototype.art.pediaArt.large = "art\\civilopedia\\icons\\units\\unit_large.png"

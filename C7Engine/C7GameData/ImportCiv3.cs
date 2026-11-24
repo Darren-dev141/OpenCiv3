@@ -563,6 +563,8 @@ namespace C7GameData {
 				foreach (RACE_City city in theBiq.RaceCityName[i]) {
 					civ.cityNames.Add(city.Name);
 				}
+				civ.militaryLeaderNames = theBiq.RaceGreatLeaderName?[i]?.Select(leader => leader.Name)
+					.Where(name => !string.IsNullOrWhiteSpace(name)).ToList() ?? [];
 				civ.traits = LoadCivTraits(race).ToHashSet();
 				civ.cultureGroupKey = GetCultureGroupIdentifier(race.CultureGroup);
 
@@ -1465,6 +1467,7 @@ namespace C7GameData {
 				if (prto.LethalLandBombardment) prototype.flags.Add(SaveUnitPrototype.Flag.LethalLandBombardment);
 				if (prto.LethalSeaBombardment) prototype.flags.Add(SaveUnitPrototype.Flag.LethalSeaBombardment);
 				if (prto.Radar) prototype.flags.Add(SaveUnitPrototype.Flag.Radar);
+				if (prto.Leader) prototype.flags.Add(SaveUnitPrototype.Flag.Leader);
 				if (prto.Wheeled) prototype.flags.Add(SaveUnitPrototype.Flag.Wheeled);
 
 				prototype.actions.UnionWith(GetUnitActions(prto));
@@ -2188,6 +2191,14 @@ namespace C7GameData {
 		private void ImportRules() {
 			BiqData theBiq = biq.Rule is null ? defaultBiq : biq;
 			RULE rule = theBiq.Rule[0];
+
+			PRTO[] prototypes = theBiq.Prto ?? defaultBiq.Prto;
+			if (rule.BattleCreatedUnit >= 0 && rule.BattleCreatedUnit < prototypes.Length) {
+				save.Rules.BattleCreatedUnit = prototypes[rule.BattleCreatedUnit].Name;
+			}
+			if (rule.BuildArmyUnit >= 0 && rule.BuildArmyUnit < prototypes.Length) {
+				save.Rules.BuildArmyUnit = prototypes[rule.BuildArmyUnit].Name;
+			}
 
 			save.Rules.MaximumResearchTime = rule.MaximumResearchTime;
 			save.Rules.MinimumResearchTime = rule.MinimumResearchTime;

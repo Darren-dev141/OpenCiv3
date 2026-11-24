@@ -4435,6 +4435,7 @@
     },
     {
       "name": "Leader",
+      "flags": ["leader"],
       "art": {
         "mainArt": {
           "defaultName": "Leader Ancient Times",
@@ -11478,6 +11479,8 @@
     "city": 2
   },
   "rules": {
+    "battleCreatedUnit": "Leader",
+    "buildArmyUnit": "Army",
     "maximumResearchTime": 50,
     "minimumResearchTime": 4,
     "shieldValueInGold": 4,

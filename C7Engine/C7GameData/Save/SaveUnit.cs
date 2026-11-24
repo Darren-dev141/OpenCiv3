@@ -17,6 +17,8 @@ namespace C7GameData.Save {
 		public string action; // "fortified"
 		public TileDirection facingDirection = TileDirection.SOUTHEAST;
 		public string experience;
+		public bool hasGeneratedMilitaryLeader;
+		public LeaderKind leaderKind;
 		public float WorkerProgressTowardsJob;
 		public ID WorkerJob;
 		public ID loadedOnUnitId;
@@ -46,6 +48,8 @@ namespace C7GameData.Save {
 			isAutomated = unit.isAutomated;
 			facingDirection = unit.facingDirection;
 			experience = unit.experienceLevelKey;
+			hasGeneratedMilitaryLeader = unit.hasGeneratedMilitaryLeader;
+			leaderKind = unit.leaderKind;
 			movePointsRemaining = unit.movementPoints.remaining;
 			WorkerProgressTowardsJob = unit.WorkerProgressTowardsJob;
 			WorkerJob = unit.WorkerJob?.Id;
@@ -57,6 +61,8 @@ namespace C7GameData.Save {
 				id = id,
 				unitType = prototypes.Find(p => p.name == prototype),
 				experienceLevelKey = experience,
+				hasGeneratedMilitaryLeader = hasGeneratedMilitaryLeader,
+				leaderKind = leaderKind,
 				experienceLevel = experienceLevels.Find(el => el.key == experience),
 				owner = players.Find(player => player.id == owner),
 				location = map.tileAt(currentLocation.X, currentLocation.Y),

@@ -1,5 +1,14 @@
 namespace C7GameData {
 	public class Rules {
+		// https://github.com/C7-Game/OpenCiv3/issues/1006 (D4)
+		public int MaximumMilitaryLeaders = 1;
+		public string BattleCreatedUnit;
+		public string BuildArmyUnit;
+		// https://forums.civfanatics.com/threads/great-leaders-everything-you-always-wanted-to-know.24371/
+		public double MilitaryLeaderChance = 1.0 / 16;
+		public double MilitaryLeaderChanceWithEpic = 1.0 / 12;
+		public double DefendingMilitaryLeaderChanceMultiplier = 0.5;
+
 		public int MaximumResearchTime;
 		public int MinimumResearchTime;
 		public int ShieldValueInGold;

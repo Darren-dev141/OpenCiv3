@@ -19,7 +19,9 @@ namespace C7GameData {
 		Explore,
 		Automate,
 		Load,
-		Unload
+		Unload,
+		HurryProduction,
+		FormArmy,
 	}
 
 	public struct ItemContext(UnitPrototype proto, Player player) {

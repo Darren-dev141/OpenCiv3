@@ -321,9 +321,17 @@ namespace C7GameData {
 		}
 
 
-		public void RollToPromote(MapUnit opponent) {
+		public void RollToPromote(MapUnit opponent) => RollToPromote(opponent, CombatRole.Bombard, location);
+
+		public void RollToPromote(MapUnit opponent, CombatRole role, Tile battleTile) {
 			// Barbarians can't promote.
 			if (owner.isBarbarians) {
+				return;
+			}
+
+			if (EngineStorage.gameData?.experienceLevels.LastOrDefault() == experienceLevel
+				&& (role == CombatRole.Attack || role == CombatRole.Defense)) {
+				RollForMilitaryLeader(opponent, role, battleTile);
 				return;
 			}
 
@@ -346,6 +354,7 @@ namespace C7GameData {
 			if (nextLevel != null) {
 				experienceLevelKey = nextLevel.key;
 				experienceLevel = nextLevel;
+				hasGeneratedMilitaryLeader = false;
 				hitPointsRemaining++;
 				return true;
 			}
@@ -734,6 +743,13 @@ namespace C7GameData {
 			}
 			if (CanUnloadToTile(this.location) && this.location.HasCity()) {
 				result.Add(UnitAction.Unload);
+			}
+
+			if (CanHurryProduction()) {
+				result.Add(UnitAction.HurryProduction);
+			}
+			if (CanFormArmy()) {
+				result.Add(UnitAction.FormArmy);
 			}
 
 			// Eventually we will have advanced actions too, whose availability will rely on their base actions' availability.
